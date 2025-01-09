@@ -32,11 +32,11 @@ describe('Scoreboard', () => {
 
     expect(() => {
       scoreboard.updateScore(TEAM_SPAIN, TEAM_BRAZIL, { home: -1, away: 2 })
-    }).toThrow('Score cannot be negative')
+    }).toThrow('Score must be a non-negative integer')
 
     expect(() => {
       scoreboard.updateScore(TEAM_SPAIN, TEAM_BRAZIL, { home: 1, away: -3 })
-    }).toThrow('Score cannot be negative')
+    }).toThrow('Score must be a non-negative integer')
   })
 
   test('should throw an error when attempting to start a match with identical opposing teams', () => {
