@@ -2,14 +2,20 @@ import { Match, Team, Score } from './types/Match'
 
 export class Scoreboard {
   private static readonly DEFAULT_SCORE: Score = { home: 0, away: 0 }
+  private static readonly ERROR_MATCH_STARTED = 'Match is already started'
+  private static readonly ERROR_SAME_TEAMS =
+    'Home and away teams cannot be the same'
+  private static readonly ERROR_INVALID_SCORE =
+    'Score must be a non-negative integer'
+
   private matches: Match[] = []
   private currentSequence = 0
 
   startMatch(homeTeam: Team, awayTeam: Team): void {
     this.validateTeams(homeTeam, awayTeam)
 
-    if (this.isMatchStarted(homeTeam, awayTeam)) {
-      throw new Error('Match is already started')
+    if (this.isMatchAlreadyActive(homeTeam, awayTeam)) {
+      throw new Error(Scoreboard.ERROR_MATCH_STARTED)
     }
     const match: Match = {
       homeTeam,
@@ -78,7 +84,7 @@ export class Scoreboard {
 
   private validateTeams(homeTeam: Team, awayTeam: Team): void {
     if (homeTeam.name === awayTeam.name) {
-      throw new Error('Home and away teams cannot be the same')
+      throw new Error(Scoreboard.ERROR_SAME_TEAMS)
     }
   }
 
@@ -89,11 +95,11 @@ export class Scoreboard {
       !Number.isInteger(score.home) ||
       !Number.isInteger(score.away)
     ) {
-      throw new Error('Score must be a non-negative integer')
+      throw new Error(Scoreboard.ERROR_INVALID_SCORE)
     }
   }
 
-  private isMatchStarted(homeTeam: Team, awayTeam: Team): boolean {
+  private isMatchAlreadyActive(homeTeam: Team, awayTeam: Team): boolean {
     return this.matches.some(
       (match) =>
         this.normalizeName(match.homeTeam.name) ===
