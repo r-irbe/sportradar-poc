@@ -31,48 +31,46 @@ export class Scoreboard {
   }
 
   updateScore(homeTeam: Team, awayTeam: Team, score: Score): void {
-    if (score.home < 0 || score.away < 0) {
-      throw new Error('Score cannot be negative')
+    if (score.home < 0 || score.away < 0 || !Number.isInteger(score.home) || !Number.isInteger(score.away)) {
+      throw new Error('Score must be a non-negative integer')
     }
     const match = this.findMatch(homeTeam, awayTeam)
     if (!match) {
-      throw new Error('Match not found')
+      throw new Error(
+        `Match between ${homeTeam.name} and ${awayTeam.name} not found`,
+      )
     }
     match.score = score
   }
 
   finishMatch(homeTeam: Team, awayTeam: Team): void {
-    const index = this.matches.findIndex(
-      (m) =>
-        this.normalizeName(m.homeTeam.name) ===
-          this.normalizeName(homeTeam.name) &&
-        this.normalizeName(m.awayTeam.name) ===
-          this.normalizeName(awayTeam.name),
-    )
-    if (index === -1) {
-      throw new Error('Match not found')
+    const match = this.findMatch(homeTeam, awayTeam)
+    if (!match) {
+      throw new Error(
+        `Match between ${homeTeam.name} and ${awayTeam.name} not found`,
+      )
     }
-    this.matches.splice(index, 1)
+    this.matches = this.matches.filter((m) => m !== match)
   }
 
   getSummary(): Match[] {
-    return [...this.matches]
+    return this.matches
+      .slice()
+      .map((match) => ({
+        homeTeam: { ...match.homeTeam },
+        awayTeam: { ...match.awayTeam },
+        score: { ...match.score },
+        startTime: new Date(match.startTime.getTime()),
+        sequenceNumber: match.sequenceNumber,
+      }))
       .sort((a, b) => {
         const totalScoreA = a.score.home + a.score.away
         const totalScoreB = b.score.home + b.score.away
-
-        if (totalScoreB !== totalScoreA) {
+        if (totalScoreA !== totalScoreB) {
           return totalScoreB - totalScoreA
         }
-
         return b.sequenceNumber - a.sequenceNumber
       })
-      .map((match) => ({
-        ...match,
-        score: { ...match.score },
-        homeTeam: { ...match.homeTeam },
-        awayTeam: { ...match.awayTeam },
-      })) //exported type should not make internal class state mutable
   }
 
   private findMatch(homeTeam: Team, awayTeam: Team): Match | undefined {

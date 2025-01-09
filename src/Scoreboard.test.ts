@@ -1,5 +1,5 @@
 import { Scoreboard } from './Scoreboard'
-import { Team } from './types/Match'
+import { Score, Team } from './types/Match'
 
 describe('Scoreboard', () => {
   let scoreboard: Scoreboard
@@ -48,20 +48,24 @@ describe('Scoreboard', () => {
 
   test('should treat team names as case-insensitive and ignore extra spaces', () => {
     scoreboard = new Scoreboard()
-    scoreboard.startMatch({ name: ' team a ' }, { name: 'TEAM B' });
+    scoreboard.startMatch({ name: ' team a ' }, { name: 'TEAM B' })
 
-    const summary = scoreboard.getSummary();
-    expect(summary.length).toBe(1);
-    expect(summary[0].homeTeam.name).toBe(' team a ');
-    expect(summary[0].awayTeam.name).toBe('TEAM B');
+    const summary = scoreboard.getSummary()
+    expect(summary.length).toBe(1)
+    expect(summary[0].homeTeam.name).toBe(' team a ')
+    expect(summary[0].awayTeam.name).toBe('TEAM B')
 
-    scoreboard.updateScore({ name: 'TEAM A' }, { name: ' team b ' }, { home: 3, away: 2 });
-    const updatedSummary = scoreboard.getSummary();
-    expect(updatedSummary[0].score).toEqual({ home: 3, away: 2 });
+    scoreboard.updateScore(
+      { name: 'TEAM A' },
+      { name: ' team b ' },
+      { home: 3, away: 2 },
+    )
+    const updatedSummary = scoreboard.getSummary()
+    expect(updatedSummary[0].score).toEqual({ home: 3, away: 2 })
 
-    scoreboard.finishMatch({ name: 'TeAm a' }, { name: ' teaM b ' });
-    const finalSummary = scoreboard.getSummary();
-    expect(finalSummary.length).toBe(0);
+    scoreboard.finishMatch({ name: 'TeAm a' }, { name: ' teaM b ' })
+    const finalSummary = scoreboard.getSummary()
+    expect(finalSummary.length).toBe(0)
   })
 
   test('should start a new match with 0-0 score', () => {
@@ -113,7 +117,7 @@ describe('Scoreboard', () => {
 
     expect(() => {
       scoreboard.finishMatch(TEAM_SPAIN, TEAM_BRAZIL)
-    }).toThrow('Match not found')
+    }).toThrow('Match between Spain and Brazil not found')
   })
 
   test('should order matches by total score and start time', () => {
@@ -138,9 +142,29 @@ describe('Scoreboard', () => {
     expect(summary[3].homeTeam.name).toBe('Argentina')
     expect(summary[4].homeTeam.name).toBe('Germany')
   })
+
+  it('should throw an error if the score is not an integer', () => {
+    const invalidScores: Score[] = [
+      { home: 1.5, away: 2 },
+      { home: 1, away: -2.5 },
+      { home: NaN, away: 2 },
+      { home: undefined as unknown as number, away: 1 },
+      { home: 1, away: Infinity },
+    ]
+
+    invalidScores.forEach((score) => {
+      const teamA: Team = { name: 'Team A' }
+      const teamB: Team = { name: 'Team B' }
+      const scoreboard = new Scoreboard()
+      expect(() => scoreboard.updateScore(teamA, teamB, score)).toThrowError(
+        'Score must be a non-negative integer',
+      )
+    })
+  })
+
   test('should throw an error when updating score for a non-started match', () => {
     expect(() => {
       scoreboard.updateScore(TEAM_SPAIN, TEAM_BRAZIL, { home: 1, away: 0 })
-    }).toThrow('Match not found')
+    }).toThrow('Match between Spain and Brazil not found')
   })
 })
