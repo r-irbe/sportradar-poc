@@ -14,6 +14,56 @@ describe('Scoreboard', () => {
     scoreboard.startMatch(TEAM_SPAIN, TEAM_BRAZIL)
   }
 
+  test('should not allow mutation of default score', () => {
+    scoreboard.startMatch(TEAM_SPAIN, TEAM_BRAZIL)
+
+    const summary = scoreboard.getSummary()
+    const firstMatch = summary[0]
+
+    firstMatch.score.home = 5
+
+    expect(Scoreboard['DEFAULT_SCORE'].home).toBe(0)
+  })
+
+  test('should throw an error when attempting to update to a negative score', () => {
+    scoreboard = new Scoreboard()
+
+    scoreboard.startMatch(TEAM_SPAIN, TEAM_BRAZIL)
+
+    expect(() => {
+      scoreboard.updateScore(TEAM_SPAIN, TEAM_BRAZIL, { home: -1, away: 2 })
+    }).toThrow('Score cannot be negative')
+
+    expect(() => {
+      scoreboard.updateScore(TEAM_SPAIN, TEAM_BRAZIL, { home: 1, away: -3 })
+    }).toThrow('Score cannot be negative')
+  })
+
+  test('should throw an error when attempting to start a match with identical opposing teams', () => {
+    scoreboard = new Scoreboard()
+    expect(() => {
+      scoreboard.startMatch(TEAM_SPAIN, TEAM_SPAIN)
+    }).toThrow('Home and away teams cannot be the same')
+  })
+
+  test('should treat team names as case-insensitive and ignore extra spaces', () => {
+    scoreboard = new Scoreboard()
+    scoreboard.startMatch({ name: ' team a ' }, { name: 'TEAM B' });
+
+    const summary = scoreboard.getSummary();
+    expect(summary.length).toBe(1);
+    expect(summary[0].homeTeam.name).toBe(' team a ');
+    expect(summary[0].awayTeam.name).toBe('TEAM B');
+
+    scoreboard.updateScore({ name: 'TEAM A' }, { name: ' team b ' }, { home: 3, away: 2 });
+    const updatedSummary = scoreboard.getSummary();
+    expect(updatedSummary[0].score).toEqual({ home: 3, away: 2 });
+
+    scoreboard.finishMatch({ name: 'TeAm a' }, { name: ' teaM b ' });
+    const finalSummary = scoreboard.getSummary();
+    expect(finalSummary.length).toBe(0);
+  })
+
   test('should start a new match with 0-0 score', () => {
     startMatchWithDefaultScore()
 
